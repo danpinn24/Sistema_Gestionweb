@@ -1,25 +1,26 @@
 <?php
 // index.php - El Front Controller (Router)
 
-// 1. INCLUSIONES DE CLASES
+// 1. INCLUSIONES DE CLASES y LIBRERÍAS
 require_once 'db/class_db.php'; 
 require_once 'controller/AppController.php'; 
 require_once 'controller/ControllerAuth.php';
-require_once 'controller/controllerAnimales.php';
-require_once 'controller/controllerAdoptante.php';
+require_once 'controller/ControllerAnimales.php';
+require_once 'controller/ControllerAdoptante.php';
 require_once 'controller/ControllerAdopciones.php';
+require_once 'controller/HomeController.php'; // 📌 NUEVA INCLUSIÓN
 require_once 'loadDatos.php'; 
 
 // 2. INICIAR SESIÓN y DB 
 session_start(); 
-$db = DB::getInstance();
+$db = DB::getInstance(); // Inicia la DB (y carga datos iniciales si es la primera vez)
 
 // 3. Determinar la acción solicitada (por URL)
 $action = $_GET['action'] ?? 'home'; 
 
 // 4. Ejecutar la acción
 switch ($action) {
-    // --- ACCIÓN HOME, LOGIN, LOGOUT (Manejadas por ControllerAuth) ---
+    // --- ACCIÓN HOME, LOGIN, LOGOUT (ControllerAuth) ---
     case 'home':
     case 'login':
         $controller = new ControllerAuth($db); 
@@ -31,46 +32,47 @@ switch ($action) {
         $controller->logout();
         break;
 
-    // --- ACCIONES DE GESTIÓN (Protegidas) ---
+    // --- ACCIÓN DE MENÚ PRINCIPAL DESPUÉS DEL LOGIN (Gestionada por HomeController) ---
+    case 'menuPrincipal':
+        $controller = new HomeController($db); // 👈 CAMBIO: Usar HomeController
+        $controller->menuPrincipal();
+        break;
+
+    // --- ACCIONES DE GESTIÓN (Animales) ---
     case 'listarAnimales':
     case 'registrarAnimal':
     case 'modificarAnimal':
     case 'borrarAnimal':
     case 'verDetallesAnimal':
     case 'confirmarBorradoAnimal': 
-        // Lógica para Animales
-        if (class_exists('ControllerAnimales')) {
-             $controller = new ControllerAnimales($db);
-             $controller->$action();
-        }
+        $controller = new ControllerAnimales($db);
+        $controller->$action();
         break;
         
+    // --- ACCIONES DE GESTIÓN (Adoptantes) ---
     case 'listarAdoptantes':
     case 'registrarAdoptante': 
     case 'modificarAdoptante':
     case 'borrarAdoptante':
     case 'verDetallesAdoptante':
-        // Lógica para Adoptantes
-        if (class_exists('ControllerAdoptante')) {
-             $controller = new ControllerAdoptante($db);
-             $controller->$action();
-        }
+    case 'confirmarBorradoAdoptante': // A implementar en ControllerAdoptante
+        $controller = new ControllerAdoptante($db);
+        $controller->$action();
         break;
 
+    // --- ACCIONES DE GESTIÓN (Adopciones) ---
     case 'verAnimalesDisponibles':
     case 'verAdoptantesHabilitados':
     case 'realizarAdopcion':
     case 'verHistorialAdopciones':
-        // Lógica para Adopciones
-        if (class_exists('ControllerAdopciones')) {
-             $controller = new ControllerAdopciones($db);
-             $controller->$action();
-        }
+        $controller = new ControllerAdopciones($db);
+        $controller->$action();
         break;
     
     default:
-        header("HTTP/1.0 404 Not Found");
-        echo "<h1>404 Not Found</h1><p>Acción no reconocida: " . htmlspecialchars($action) . "</p>";
+        // Si la acción no existe
+        $controller = new ControllerAuth($db);
+        $controller->login();
         break;
 }
 ?>

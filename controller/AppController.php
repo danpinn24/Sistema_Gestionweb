@@ -9,39 +9,50 @@ require_once __DIR__ . '/../librerias/smarty-5.5.1/libs/Smarty.class.php';
 abstract class AppController {
     protected DB $db;
     protected $smarty;
-    protected $nav_items; 
+    protected $nav_items; // Array para los ítems de navegación
 
     public function __construct(DB $db) {
         $this->db = $db;
         
-        // 1. Obtener la ruta absoluta de la raíz del proyecto (sale de 'controller')
+        // 1. Obtener la ruta absoluta de la raíz del proyecto
         $root_path = dirname(__DIR__); 
         
-        // 2. Inicialización de Smarty (usando el namespace de Smarty 5)
+        // 2. Inicialización de Smarty
         $this->smarty = new \Smarty\Smarty(); 
         
-        // 🚨 CONFIGURACIÓN DE RUTAS ABSOLUTAS (Soluciona el error 'Unable to load base.tpl')
+        // CONFIGURACIÓN DE RUTAS ABSOLUTAS
         $this->smarty->setTemplateDir($root_path . '/View/templates/'); 
         $this->smarty->setCompileDir($root_path . '/View/templates_c/'); 
         $this->smarty->setCacheDir($root_path . '/View/cache/');
         
-        // Configuración adicional (opcional, pero buena práctica)
+        // Configuración adicional
         $this->smarty->setCaching(\Smarty\Smarty::CACHING_OFF);
         $this->smarty->setCompileCheck(true);
 
-        // Definición de la navegación base (ítems visibles cuando está logueado)
+        // ===========================================
+        // 💡 CRÍTICO: DEFINICIÓN DE LA NAVEGACIÓN
+        // ===========================================
         $this->nav_items = [
+            ['nombre' => '🏠 Inicio', 'url' => 'index.php?action=menuPrincipal'], 
             ['nombre' => 'Animales', 'url' => 'index.php?action=listarAnimales'],
             ['nombre' => 'Adoptantes', 'url' => 'index.php?action=listarAdoptantes'],
-            ['nombre' => 'Adopciones', 'url' => 'index.php?action=verHistorialAdopciones'],
+            // ENLACES DE ADOPCIONES AÑADIDOS
+            ['nombre' => '📝 Nueva Adopción', 'url' => 'index.php?action=realizarAdopcion'],
+            ['nombre' => '📋 Historial Adopciones', 'url' => 'index.php?action=verHistorialAdopciones'],
         ];
+        // ===========================================
     }
     
+    /**
+     * Verifica si el usuario está logueado.
+     */
     protected function estaLogueado(): bool {
-        // La sesión debe estar iniciada en index.php
-        return isset($_SESSION['logueado']) && $_SESSION['logueado'] === true;
+        return $_SESSION['logueado'] ?? false;
     }
 
+    /**
+     * Redirige al login si el usuario no está logueado.
+     */
     protected function protegerAcceso() {
         if (!$this->estaLogueado()) {
             $mensaje = urlencode("Debes iniciar sesión para acceder a esta página.");
@@ -59,15 +70,15 @@ abstract class AppController {
         $this->smarty->assign('CSS_PATH', 'style.css'); 
         $this->smarty->assign('titulo', $titulo);
         
-        // 2. Asignar navegación
+        // 2. Asignar navegación (basada en si está logueado)
         if ($this->estaLogueado()) {
             $nav = $this->nav_items;
             // Añadir el enlace de Cerrar Sesión
-            $nav[] = ['nombre' => 'Cerrar Sesión (' . ($_SESSION['username'] ?? 'Usuario') . ')', 'url' => 'index.php?action=logout'];
+            $nav[] = ['nombre' => '❌ Cerrar Sesión (' . ($_SESSION['username'] ?? 'Usuario') . ')', 'url' => 'index.php?action=logout'];
             $this->smarty->assign('nav_items', $nav);
         } else {
             // Mostrar solo Home si no está logueado
-            $this->smarty->assign('nav_items', [['nombre' => 'Inicio', 'url' => 'index.php?action=home']]);
+            $this->smarty->assign('nav_items', [['nombre' => '🏠 Inicio', 'url' => 'index.php?action=home']]);
         }
         
         // 3. Asignar datos específicos del controlador
@@ -75,8 +86,9 @@ abstract class AppController {
             $this->smarty->assign($key, $value);
         }
         
-        // 4. Mostrar la vista: carga la plantilla de contenido ($template) dentro de base.tpl
+        // 4. Renderizar
         $this->smarty->assign('contenido_tpl', $template);
         $this->smarty->display('base.tpl');
     }
 }
+?>

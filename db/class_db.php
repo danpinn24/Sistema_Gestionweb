@@ -1,31 +1,34 @@
 <?php
+// db/class_db.php
+
 class DB {
     private static $instance = null; 
     
     private $animales = [];
-    private $adoptantes = []; // <-- Incluido para la estructura
+    private $adoptantes = [];
     private $adopciones = [];
     private $usuarios = [];
     
     private static $ultimoIdAnimal = 0; 
-    private static $ultimoIdAdoptante = 0; // <-- Incluido
+    private static $ultimoIdAdoptante = 0; 
     private static $ultimoIdAdopcion = 0;
 
     private function __construct() {
-        // La ruta asume que loadDatos.php está un nivel arriba de db/
         require_once __DIR__ . '/../loadDatos.php'; 
 
-        // 1. Intentar cargar los datos de la sesión
+        // Cargar/Inicializar datos desde la sesión
         if (isset($_SESSION['animales_data'])) {
             $this->animales = $_SESSION['animales_data'];
-            $this->adoptantes = $_SESSION['adoptantes_data'] ?? []; // <-- Cargar Adoptantes
+            $this->adoptantes = $_SESSION['adoptantes_data'] ?? [];
+            $this->adopciones = $_SESSION['adopciones_data'] ?? [];
             $this->usuarios = $_SESSION['usuarios_data'] ?? [];
             
             self::$ultimoIdAnimal = $_SESSION['ultimoIdAnimal'] ?? 0;
-            self::$ultimoIdAdoptante = $_SESSION['ultimoIdAdoptante'] ?? 0; // <-- Cargar último ID
+            self::$ultimoIdAdoptante = $_SESSION['ultimoIdAdoptante'] ?? 0;
+            self::$ultimoIdAdopcion = $_SESSION['ultimoIdAdopcion'] ?? 0;
             
         } else {
-            // 2. Si no hay datos en la sesión, cargar datos iniciales
+            // Cargar datos iniciales si no hay sesión (llama a loadDatos)
             loadDatos($this); 
             $this->guardarEnSesion(); 
         }
@@ -42,21 +45,22 @@ class DB {
         $_SESSION['animales_data'] = $this->animales;
         $_SESSION['ultimoIdAnimal'] = self::$ultimoIdAnimal;
         
-        $_SESSION['adoptantes_data'] = $this->adoptantes; // <-- Guardar Adoptantes
-        $_SESSION['ultimoIdAdoptante'] = self::$ultimoIdAdoptante; // <-- Guardar ID
+        $_SESSION['adoptantes_data'] = $this->adoptantes;
+        $_SESSION['ultimoIdAdoptante'] = self::$ultimoIdAdoptante;
+        
+        $_SESSION['adopciones_data'] = $this->adopciones;
+        $_SESSION['ultimoIdAdopcion'] = self::$ultimoIdAdopcion;
         
         $_SESSION['usuarios_data'] = $this->usuarios;
     }
     
-    // === MÉTODOS PARA AUTENTICACIÓN ===
-    
+    // === AUTENTICACIÓN ===
     public function agregarUsuario($usuario) {
         $this->usuarios[] = $usuario;
     }
     
     public function verificarCredenciales($username, $password) {
         foreach ($this->usuarios as $usuario) {
-            // NOTA: Simulación de verificación simple
             if ($usuario['username'] === $username && $usuario['password'] === $password) {
                 return $usuario;
             }
@@ -64,7 +68,8 @@ class DB {
         return false;
     }
 
-    // === MÉTODOS DE ANIMALES ===
+    // === GESTIÓN DE ANIMALES (CRUD) ===
+    
     public function getAnimales() { return $this->animales; }
     
     public function agregarAnimal($animal) {
@@ -74,11 +79,41 @@ class DB {
         $this->guardarEnSesion(); 
     }
     
-    // ... (modificarAnimal, eliminarAnimal, buscarAnimalPorId) ...
+    public function buscarAnimalPorId($id) {
+        foreach ($this->animales as $animal) {
+            if ($animal->getId() == $id) {
+                return $animal;
+            }
+        }
+        return null;
+    }
+
+    public function modificarAnimal($animalActualizado) {
+        foreach ($this->animales as $key => $animal) {
+            if ($animal->getId() === $animalActualizado->getId()) {
+                $this->animales[$key] = $animalActualizado;
+                $this->guardarEnSesion();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function eliminarAnimal($id) {
+        foreach ($this->animales as $key => $animal) {
+            if ($animal->getId() == $id) {
+                unset($this->animales[$key]);
+                $this->animales = array_values($this->animales); // Reindexar el array
+                $this->guardarEnSesion();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // === GESTIÓN DE ADOPTANTES (CRUD) ===
     
-    // === MÉTODOS DE ADOPTANTES (NUEVOS, para resolver el error original) ===
-    
-    public function getAdoptantes() { return $this->adoptantes; } // Getter
+    public function getAdoptantes() { return $this->adoptantes; } 
     
     public function agregarAdoptante($adoptante) {
         self::$ultimoIdAdoptante++;
@@ -87,9 +122,65 @@ class DB {
         $this->guardarEnSesion(); 
     }
     
-    // ... (modificarAdoptante, eliminarAdoptante, buscarAdoptantePorId) ...
+    public function buscarAdoptantePorId($id) {
+        foreach ($this->adoptantes as $adoptante) {
+            if ($adoptante->getId() == $id) {
+                return $adoptante;
+            }
+        }
+        return null;
+    }
+public function modificarAdoptante($adoptanteActualizado) {
+        foreach ($this->adoptantes as $key => $adoptante) {
+            if ($adoptante->getId() === $adoptanteActualizado->getId()) {
+                $this->adoptantes[$key] = $adoptanteActualizado;
+                $this->guardarEnSesion();
+                return true;
+            }
+        }
+        return false;
+    }
 
-    // === MÉTODOS DE ADOPCIONES ===
-    // ... (agregarAdopcion, etc.) ...
+    /**
+     * Elimina un Adoptante por su ID.
+     */
+    public function eliminarAdoptante($id) {
+        foreach ($this->adoptantes as $key => $adoptante) {
+            if ($adoptante->getId() == $id) {
+                unset($this->adoptantes[$key]);
+                $this->adoptantes = array_values($this->adoptantes); // Reindexar el array
+                $this->guardarEnSesion();
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    // NOTA: Agregar modificarAdoptante y eliminarAdoptante (similar a los métodos de Animales)
+
+    // === GESTIÓN DE ADOPCIONES ===
+
+    public function getAdopciones() { return $this->adopciones; }
+    
+    public function agregarAdopcion($adopcion) {
+        self::$ultimoIdAdopcion++;
+        $adopcion->setIdAdopcion(self::$ultimoIdAdopcion);
+        $this->adopciones[] = $adopcion;
+        $this->guardarEnSesion();
+    }
+    
+    // === MÉTODOS AUXILIARES PARA CONTROLADORES ===
+    
+    public function getAnimalesListos() {
+        return array_filter($this->animales, function($a) {
+            return strtolower($a->getEstado()) === 'listo para adopcion';
+        });
+    }
+
+    public function getAdoptantesHabilitados() {
+        return array_filter($this->adoptantes, function($a) {
+            return $a->cumpleRequisitos();
+        });
+    }
 }
 ?>

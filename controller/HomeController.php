@@ -1,25 +1,45 @@
 <?php
 // controller/HomeController.php
 
-// Asume que AppController.php está en el mismo nivel o es accesible
-require_once 'controller/AppController.php';
+require_once __DIR__ . '/AppController.php'; 
+require_once __DIR__ . '/../db/class_db.php';
 
 class HomeController extends AppController {
     
-    // El constructor hereda la instancia de DB y configura Smarty
     public function __construct(DB $db) {
         parent::__construct($db);
     }
     
     /**
-     * Renderiza la página de bienvenida (el hub principal).
+     * Muestra el dashboard principal con estadísticas tras el login.
      */
-    public function home() {
-        $titulo = 'Bienvenido al Sistema de Gestión';
+    public function menuPrincipal() {
+        $this->protegerAcceso(); 
         
-        // 💡 Renderiza la plantilla principal 'home.tpl'
-        // NOTA: Si 'home.tpl' está dentro de una subcarpeta (ej: 'templates/general/home.tpl'), ajusta la ruta aquí.
-        $this->render('home.tpl', $titulo); 
+        // 1. OBTENER DATOS PARA ESTADÍSTICAS
+        // (Usamos los métodos que ya existen en tu class_db.php)
+        $animales_totales = count($this->db->getAnimales());
+        $animales_listos = count($this->db->getAnimalesListos());
+        $adopciones_totales = count($this->db->getAdopciones());
+        $adoptantes_habilitados = count($this->db->getAdoptantesHabilitados());
+
+        // 2. AGRUPAR DATOS PARA LA PLANTILLA
+        $stats = [
+            'animales_totales' => $animales_totales,
+            'animales_listos' => $animales_listos,
+            'adopciones_totales' => $adopciones_totales,
+            'adoptantes_habilitados' => $adoptantes_habilitados
+        ];
+
+        // 3. RENDERIZAR
+        $this->render(
+            'menu_principal.tpl', 
+            'Dashboard de Bienvenida',
+            [
+                'username' => $_SESSION['username'] ?? 'Administrador',
+                'stats' => $stats // 👈 Pasamos el nuevo array de estadísticas
+            ]
+        );
     }
 }
 ?>
