@@ -118,4 +118,187 @@ class ControllerAdopciones extends AppController {
             ['historial' => $datosAdopciones]
         );
     }
-}
+    
+
+    // === NUEVOS MÉTODOS PARA CRUD ADOPCIONES ===
+
+    /**
+     * Muestra los detalles de una adopción específica.
+     */
+    public function verDetallesAdopcion() {
+        $this->protegerAcceso();
+        $id = (int) ($_GET['id'] ?? 0);
+        
+        $adopcion = $this->db->buscarAdopcionPorId($id);
+        
+        if (!$adopcion) {
+            header('Location: index.php?action=verHistorialAdopciones&error=' . urlencode('Adopción no encontrada.'));
+            exit;
+        }
+        
+        $animal = $this->db->buscarAnimalPorId($adopcion->getIdAnimal());
+        $adoptante = $this->db->buscarAdoptantePorId($adopcion->getIdAdoptante());
+
+        $this->render(
+            'adopciones/detalles.tpl', 
+            'Detalles de la Adopción', 
+            [
+                'adopcion' => $adopcion,
+                'animal' => $animal,
+                'adoptante' => $adoptante
+            ]
+        );
+    }
+    
+    /**
+     * Muestra el formulario para modificar una adopción y procesa el cambio.
+     */
+    public function modificarAdopcion() {
+        $this->protegerAcceso();
+        $id = (int) ($_GET['id'] ?? $_POST['id_adopcion'] ?? 0);
+        $error = null;
+
+        $adopcion = $this->db->buscarAdopcionPorId($id);
+
+        if (!$adopcion) {
+            header('Location: index.php?action=verHistorialAdopciones&error=' . urlencode('Adopción no encontrada.'));
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // --- PROCESAR EL FORMULARIO ---
+            $idAnimalNuevo = (int) ($_POST['animal_id'] ?? 0);
+            $idAdoptanteNuevo = (int) ($_POST['adoptante_id'] ?? 0);
+            $fechaNueva = $_POST['fecha'] ?? date('Y-m-d');
+            
+            $idAnimalAntiguo = $adopcion->getIdAnimal();
+
+            if ($idAnimalNuevo === 0 || $idAdoptanteNuevo === 0) {
+                 $error = 'Error: Debe seleccionar un Animal y un Adoptante válidos.';
+            } else {
+                
+                // Si el animal cambió, gestionamos los estados
+                if ($idAnimalAntiguo != $idAnimalNuevo) {
+                    // 1. Devolver el animal antiguo a "Listo"
+                    $animalAntiguo = $this->db->buscarAnimalPorId($idAnimalAntiguo);
+                    if ($animalAntiguo) {
+                        $animalAntiguo->setEstado('Listo para adopcion');
+                        $this->db->modificarAnimal($animalAntiguo);
+                    }
+                    
+                    // 2. Poner el animal nuevo como "Adoptado"
+                    $animalNuevo = $this->db->buscarAnimalPorId($idAnimalNuevo);
+                    if ($animalNuevo) {
+                        $animalNuevo->setEstado('Adoptado');
+                        $this->db->modificarAnimal($animalNuevo);
+                    }
+                }
+                
+                // 3. Actualizar la adopción
+                $adopcion->setIdAnimal($idAnimalNuevo);
+                $adopcion->setIdAdoptante($idAdoptanteNuevo);
+                $adopcion->setFechaAdopcion($fechaNueva);
+                $this->db->modificarAdopcion($adopcion);
+                
+                header('Location: index.php?action=verHistorialAdopciones&msg=' . urlencode('Adopción actualizada con éxito.'));
+                exit;
+            }
+
+        }
+        
+        // --- MOSTRAR EL FORMULARIO (GET o POST con error) ---
+        
+        // Obtenemos las listas de disponibles
+        $animales_listos = $this->db->getAnimalesListos(); 
+        $adoptantes_habilitados = $this->db->getAdoptantesHabilitados();
+        
+        // Añadimos el animal/adoptante actuales a las listas (por si no estuvieran "listos/habilitados" pero ya están asignados)
+        $animal_actual = $this->db->buscarAnimalPorId($adopcion->getIdAnimal());
+        $adoptante_actual = $this->db->buscarAdoptantePorId($adopcion->getIdAdoptante());
+        
+        // Aseguramos que el animal actual esté en la lista para el <select>
+        if ($animal_actual && !in_array($animal_actual, $animales_listos, true)) {
+             array_unshift($animales_listos, $animal_actual); // Lo ponemos al principio
+        }
+        // Aseguramos que el adoptante actual esté en la lista para el <select>
+        if ($adoptante_actual && !in_array($adoptante_actual, $adoptantes_habilitados, true)) {
+             array_unshift($adoptantes_habilitados, $adoptante_actual); // Lo ponemos al principio
+        }
+
+        $this->render(
+            'adopciones/modificar_form.tpl', 
+            'Modificar Adopción', 
+            [
+                'adopcion' => $adopcion,
+                'listos' => $animales_listos, 
+                'habilitados' => $adoptantes_habilitados,
+                'error' => $error
+            ]
+        );
+    }
+    
+    /**
+     * Muestra la página de confirmación antes de borrar.
+     */
+    public function confirmarBorradoAdopcion() {
+        $this->protegerAcceso();
+        $id = (int) ($_GET['id'] ?? 0);
+        $adopcion = $this->db->buscarAdopcionPorId($id);
+        
+        if (!$adopcion) {
+            header('Location: index.php?action=verHistorialAdopciones&error=' . urlencode('Adopción no encontrada.'));
+            exit;
+        }
+        
+        // Obtenemos los nombres para la confirmación
+        $animal = $this->db->buscarAnimalPorId($adopcion->getIdAnimal());
+        $adoptante = $this->db->buscarAdoptantePorId($adopcion->getIdAdoptante());
+
+        $this->render(
+            'adopciones/confirmar_borrado.tpl', 
+            'Confirmar Borrado de Adopción', 
+            [
+                'adopcion' => $adopcion,
+                'animal_nombre' => $animal ? $animal->getNombre() : 'Animal Desconocido',
+                'adoptante_nombre' => $adoptante ? $adoptante->getNombre() : 'Adoptante Desconocido'
+            ]
+        );
+    }
+    
+    /**
+     * Procesa la eliminación de una adopción.
+     */
+    public function borrarAdopcion() {
+        $this->protegerAcceso();
+        
+        // Solo debe funcionar por POST para seguridad
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+             header('Location: index.php?action=verHistorialAdopciones');
+             exit;
+        }
+        
+        $id = (int) ($_POST['id_adopcion'] ?? 0);
+        $adopcion = $this->db->buscarAdopcionPorId($id);
+
+        if ($adopcion) {
+            // 1. Devolver el animal al estado "Listo para adopcion"
+            $animal = $this->db->buscarAnimalPorId($adopcion->getIdAnimal());
+            if ($animal) {
+                $animal->setEstado('Listo para adopcion');
+                $this->db->modificarAnimal($animal);
+            }
+            
+            // 2. Eliminar el registro de adopción
+            $this->db->eliminarAdopcion($id);
+            
+            header('Location: index.php?action=verHistorialAdopciones&msg=' . urlencode('Adopción eliminada con éxito. El animal vuelve a estar disponible.'));
+            exit;
+            
+        } else {
+            header('Location: index.php?action=verHistorialAdopciones&error=' . urlencode('No se pudo eliminar la adopción.'));
+            exit;
+        }
+    }
+
+} // Fin de la clase ControllerAdopciones
+?>

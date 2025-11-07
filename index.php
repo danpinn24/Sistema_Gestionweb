@@ -5,10 +5,10 @@
 require_once 'db/class_db.php'; 
 require_once 'controller/AppController.php'; 
 require_once 'controller/ControllerAuth.php';
-require_once 'controller/ControllerAnimales.php';
-require_once 'controller/ControllerAdoptante.php';
+require_once 'controller/controllerAnimales.php';
+require_once 'controller/controllerAdoptante.php';
 require_once 'controller/ControllerAdopciones.php';
-require_once 'controller/HomeController.php'; // 📌 NUEVA INCLUSIÓN
+require_once 'controller/HomeController.php'; 
 require_once 'loadDatos.php'; 
 
 // 2. INICIAR SESIÓN y DB 
@@ -65,6 +65,12 @@ switch ($action) {
     case 'verAdoptantesHabilitados':
     case 'realizarAdopcion':
     case 'verHistorialAdopciones':
+    // --- NUEVAS ACCIONES CRUD ADOPCIONES ---
+    case 'verDetallesAdopcion':
+    case 'modificarAdopcion':
+    case 'confirmarBorradoAdopcion':
+    case 'borrarAdopcion':
+    // --- FIN NUEVAS ACCIONES ---
         $controller = new ControllerAdopciones($db);
         $controller->$action();
         break;

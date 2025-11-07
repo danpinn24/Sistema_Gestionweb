@@ -156,8 +156,6 @@ public function modificarAdoptante($adoptanteActualizado) {
         return false;
     }
     
-    // NOTA: Agregar modificarAdoptante y eliminarAdoptante (similar a los métodos de Animales)
-
     // === GESTIÓN DE ADOPCIONES ===
 
     public function getAdopciones() { return $this->adopciones; }
@@ -168,6 +166,51 @@ public function modificarAdoptante($adoptanteActualizado) {
         $this->adopciones[] = $adopcion;
         $this->guardarEnSesion();
     }
+    
+    // --- NUEVOS MÉTODOS PARA CRUD ADOPCIONES ---
+
+    /**
+     * Busca una adopción por su ID.
+     */
+    public function buscarAdopcionPorId($id) {
+        foreach ($this->adopciones as $adopcion) {
+            if ($adopcion->getIdAdopcion() == $id) {
+                return $adopcion;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Actualiza una adopción existente.
+     */
+    public function modificarAdopcion($adopcionActualizada) {
+        foreach ($this->adopciones as $key => $adopcion) {
+            if ($adopcion->getIdAdopcion() === $adopcionActualizada->getIdAdopcion()) {
+                $this->adopciones[$key] = $adopcionActualizada;
+                $this->guardarEnSesion();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Elimina una adopción por su ID.
+     */
+    public function eliminarAdopcion($id) {
+        foreach ($this->adopciones as $key => $adopcion) {
+            if ($adopcion->getIdAdopcion() == $id) {
+                unset($this->adopciones[$key]);
+                $this->adopciones = array_values($this->adopciones); // Reindexar
+                $this->guardarEnSesion();
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    // --- FIN DE NUEVOS MÉTODOS ---
     
     // === MÉTODOS AUXILIARES PARA CONTROLADORES ===
     
