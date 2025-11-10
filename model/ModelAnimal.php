@@ -52,9 +52,6 @@ class Animal
     public function setFechaIngreso($fechaIngreso) { $this->fechaIngreso = $fechaIngreso; }
     public function setEstado($estado) { $this->estado = $estado; }
 
-    // Métodos para la persistencia
-    public function agregar() { /* ... */ }
-    public function modificar($data) { /* ... */ }
-    public function eliminar() { /* ... */ }
+
 }
 ?>

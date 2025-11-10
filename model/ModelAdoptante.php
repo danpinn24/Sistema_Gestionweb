@@ -5,7 +5,7 @@ require_once __DIR__ . '/../db/class_db.php';
 class Adoptante {
     private static $ultimoId = 0;
     
-    // 🛑 PROPIEDADES DECLARADAS (SOLUCIÓN AL ERROR) 🛑
+    
     private $id;
     private $nombre;
     private $dni;
@@ -50,30 +50,5 @@ class Adoptante {
     public function setEmail($email) { $this->email = $email; }
     public function setRequisitosCumplidos($valor) { $this->requisitosCumplidos = $valor; }
 
-    // Métodos de persistencia
-    public function agregar()
-    {
-        $db = DB::getInstance();
-        $db->agregarAdoptante($this);
-    }
-    
-    public function modificar($data)
-    {
-        if (isset($data['nombre'])) { $this->setNombre($data['nombre']); }
-        if (isset($data['dni'])) { $this->setDni($data['dni']); }
-        if (isset($data['direccion'])) { $this->setDireccion($data['direccion']); }
-        if (isset($data['telefono'])) { $this->setTelefono($data['telefono']); }
-        if (isset($data['email'])) { $this->setEmail($data['email']); }
-        if (isset($data['requisitosCumplidos'])) { $this->setRequisitosCumplidos($data['requisitosCumplidos']); }
-        
-        $db = DB::getInstance();
-        $db->modificarAdoptantePorId($this->id, $data);
-    }
-
-    public function eliminar()
-    {
-        $db = DB::getInstance();
-        $db->eliminarAdoptante($this->id);
-    }
 }
 ?>

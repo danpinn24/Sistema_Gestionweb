@@ -39,27 +39,6 @@ class Adopcion
     public function setIdAdoptante($id) { $this->idAdoptante = $id; }
     public function setFechaAdopcion($fecha) { $this->fechaAdopcion = $fecha; }
 
-    // Métodos de persistencia
-    public function agregar()
-    {
-        $db = DB::getInstance();
-        $db->agregarAdopcion($this);
-    }
-
-    public function modificar($data)
-    {
-        if (isset($data['idAnimal'])) { $this->setIdAnimal($data['idAnimal']); }
-        if (isset($data['idAdoptante'])) { $this->setIdAdoptante($data['idAdoptante']); }
-        if (isset($data['fechaAdopcion'])) { $this->setFechaAdopcion($data['fechaAdopcion']); }
-        
-        $db = DB::getInstance();
-        $db->modificarAdopcionPorId($this->idAdopcion, $data);
-    }
-
-    public function eliminar()
-    {
-        $db = DB::getInstance();
-        $db->eliminarAdopcion($this->idAdopcion);
-    }
+  
 }
 ?>

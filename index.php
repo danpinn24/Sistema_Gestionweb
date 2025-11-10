@@ -9,7 +9,6 @@ require_once 'controller/controllerAnimales.php';
 require_once 'controller/controllerAdoptante.php';
 require_once 'controller/ControllerAdopciones.php';
 require_once 'controller/HomeController.php'; 
-require_once 'loadDatos.php'; 
 
 // 2. INICIAR SESIÓN y DB 
 session_start(); 
