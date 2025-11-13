@@ -1,21 +1,16 @@
 <?php
-// ModelAdopcion.php - SOLO LÓGICA DE DATOS
 require_once __DIR__ . '/../db/class_db.php';
 
 class Adopcion
 {
     private static $ultimoId = 0;
-    
-    // 🛑 PROPIEDADES DECLARADAS (SOLUCIÓN AL ERROR) 🛑
     private $idAdopcion;
     private $idAnimal;
     private $idAdoptante;
     private $fechaAdopcion;
-    // ---------------------------------------------
 
     public function __construct($idAnimal, $idAdoptante, $fechaAdopcion, $idAdopcion = null)
     {
-        // Generación del ID (Corregido para permitir carga desde DB)
         if ($idAdopcion === null) {
             self::$ultimoId++;
             $this->idAdopcion = self::$ultimoId;
@@ -28,7 +23,6 @@ class Adopcion
         $this->fechaAdopcion = $fechaAdopcion;
     }
 
-    // Getters y Setters
     public function getIdAdopcion() { return $this->idAdopcion; }
     public function getIdAnimal() { return $this->idAnimal; }
     public function getIdAdoptante() { return $this->idAdoptante; }

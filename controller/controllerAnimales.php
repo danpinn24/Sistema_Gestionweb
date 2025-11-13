@@ -9,11 +9,8 @@ class ControllerAnimales extends AppController {
         parent::__construct($db);
     }
    
-    /**
-     * Muestra el listado de animales. Requiere autenticación.
-     */
     public function listarAnimales() {
-        $this->protegerAcceso(); // 📌 CRÍTICO: Asegura que el usuario esté logueado
+        $this->protegerAcceso();
         
         $titulo = 'Listado de Animales';
         $animales = $this->db->getAnimales(); 
@@ -21,11 +18,8 @@ class ControllerAnimales extends AppController {
         $this->render('animales/lista.tpl', $titulo, ['animales' => $animales]);
     }
     
-    /**
-     * Muestra el formulario de registro (GET) o procesa el formulario (POST).
-     */
     public function registrarAnimal() {
-        $this->protegerAcceso(); // 📌 CRÍTICO: Asegura que el usuario esté logueado
+        $this->protegerAcceso();
         $titulo = 'Registrar Nuevo Animal';
 
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -34,7 +28,6 @@ class ControllerAnimales extends AppController {
         }
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Validación de campos obligatorios
             if (empty($_POST['nombre']) || empty($_POST['especie']) || empty($_POST['edad']) || empty($_POST['estado'])) {
                  $this->render('animales/registro_form.tpl', $titulo, [
                      'error' => 'Por favor, complete todos los campos requeridos (Nombre, Especie, Edad, Estado).'
@@ -60,11 +53,8 @@ class ControllerAnimales extends AppController {
         }
     }
     
-    /**
-     * Muestra una página intermedia para confirmar la eliminación.
-     */
     public function confirmarBorradoAnimal() {
-        $this->protegerAcceso(); // 📌 PROTECCIÓN
+        $this->protegerAcceso();
         
         if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
             header('Location: index.php?action=listarAnimales&msg=' . urlencode('Error: ID no proporcionado o inválido para confirmar borrado.'));
@@ -86,11 +76,8 @@ class ControllerAnimales extends AppController {
         ]);
     }
     
-    /**
-     * Procesa la eliminación final del animal por ID.
-     */
     public function borrarAnimal() {
-        $this->protegerAcceso(); // 📌 PROTECCIÓN
+        $this->protegerAcceso();
         
         if (isset($_GET['id']) && is_numeric($_GET['id'])) {
             $id = (int)$_GET['id'];
@@ -114,11 +101,8 @@ class ControllerAnimales extends AppController {
         exit;
     }
 
-    /**
-     * Muestra los detalles de un animal específico.
-     */
     public function verDetallesAnimal() {
-        $this->protegerAcceso(); // 📌 PROTECCIÓN
+        $this->protegerAcceso();
         
         if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
             header('Location: index.php?action=listarAnimales&msg=' . urlencode('Error: ID no proporcionado.'));
@@ -140,14 +124,10 @@ class ControllerAnimales extends AppController {
         ]);
     }
 
-    /**
-     * Muestra el formulario de modificación (GET) y procesa la actualización (POST).
-     */
     public function modificarAnimal() {
-        $this->protegerAcceso(); // 📌 PROTECCIÓN
+        $this->protegerAcceso();
         $titulo = 'Modificar Animal';
         
-        // El ID debe venir siempre, sea por GET o POST
         $id = (int)($_REQUEST['id'] ?? 0); 
 
         if ($id === 0) {
@@ -162,10 +142,8 @@ class ControllerAnimales extends AppController {
             exit;
         }
 
-        // LÓGICA POST (Guardar cambios)
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
              
-             // Validación
              if (empty($_POST['nombre']) || empty($_POST['especie']) || empty($_POST['edad']) || empty($_POST['estado'])) {
                   $this->render('animales/modificacion_form.tpl', $titulo, [
                       'animal' => $animal,
@@ -174,7 +152,6 @@ class ControllerAnimales extends AppController {
                   return;
              }
 
-             // Crear un nuevo objeto Animal con los datos del POST
              $animal_actualizado = new Animal(
                  $_POST['nombre'],
                  $_POST['especie'],
@@ -182,22 +159,19 @@ class ControllerAnimales extends AppController {
                  (int)$_POST['edad'],
                  $_POST['sexo'] ?? '',
                  $_POST['caracteristicasFisicas'] ?? '',
-                 $animal->getFechaIngreso(), // Mantenemos la fecha original de ingreso
+                 $animal->getFechaIngreso(),
                  $_POST['estado']
              );
              
              $animal_actualizado->setId($id); 
 
-             // Llamar al método de la base de datos para guardar los cambios
              $this->db->modificarAnimal($animal_actualizado); 
 
-             // Redireccionar
              $mensaje = 'Animal ' . urlencode($animal_actualizado->getNombre()) . ' modificado con éxito.';
              header('Location: index.php?action=listarAnimales&msg=' . $mensaje);
              exit;
         }
-        
-        // LÓGICA GET (Mostrar formulario precargado)
+    
         $this->render('animales/modificacion_form.tpl', $titulo, [
             'animal' => $animal
         ]);

@@ -1,5 +1,5 @@
 <?php
-// ModelAdoptante.php - SOLO LÓGICA DE DATOS
+
 require_once __DIR__ . '/../db/class_db.php';
 
 class Adoptante {
@@ -13,10 +13,8 @@ class Adoptante {
     private $telefono;
     private $email;
     private $requisitosCumplidos;
-    // ---------------------------------------------
 
     public function __construct($nombre, $dni, $direccion, $telefono, $email, $requisitosCumplidos, $id = null) {
-        // Generación del ID (Corregido para permitir carga desde DB)
         if ($id === null) {
             self::$ultimoId++;
             $this->id = self::$ultimoId;
@@ -32,7 +30,6 @@ class Adoptante {
         $this->requisitosCumplidos = $requisitosCumplidos;
     }
 
-    // Getters
     public function getId() { return $this->id; }
     public function getNombre() { return $this->nombre; }
     public function getDni() { return $this->dni; }
@@ -41,7 +38,6 @@ class Adoptante {
     public function getEmail() { return $this->email; }
     public function cumpleRequisitos() { return $this->requisitosCumplidos; }
 
-    // Setters
     public function setId($id) { $this->id = $id; }
     public function setNombre($nombre) { $this->nombre = $nombre; }
     public function setDni($dni) { $this->dni = $dni; }

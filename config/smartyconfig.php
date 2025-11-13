@@ -1,9 +1,4 @@
 <?php
-// config/SmartyConfig.php
-
-// RUTA CRÍTICA 1: Inclusión de la librería
-// Nota: La ruta original era '/../librerias/smarty-5.5.1/src/Smarty.class.php'. 
-// Si la estructura cambió, la ruta debe reflejar el archivo real, aquí usamos el que proporcionaste.
 require_once __DIR__ . '/../librerias/smarty-5.5.1/libs/Smarty.class.php';
 
 use Smarty\Smarty; 

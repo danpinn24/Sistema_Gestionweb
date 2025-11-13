@@ -1,10 +1,9 @@
 <?php
-// ModelAnimal.php - SOLO LÓGICA DE DATOS
+
 require_once __DIR__ . '/../db/class_db.php';
 
 class Animal
 {
-    // Propiedades Declaradas
     private $id; 
     private $nombre; 
     private $especie;
@@ -17,7 +16,6 @@ class Animal
 
     public function __construct($nombre, $especie, $raza, $edad, $sexo, $caracteristicasFisicas, $fechaIngreso, $estado, $id = null)
     {
-        // El ID es asignado por la clase DB
         $this->id = $id; 
         
         $this->nombre = $nombre;
@@ -30,7 +28,6 @@ class Animal
         $this->estado = $estado;
     }
     
-    // Getters
     public function getId() { return $this->id; }
     public function getNombre() { return $this->nombre; }
     public function getEspecie() { return $this->especie; }
@@ -41,7 +38,6 @@ class Animal
     public function getFechaIngreso() { return $this->fechaIngreso; }
     public function getEstado() { return $this->estado; }
 
-    // Setters
     public function setId($id) { $this->id = $id; }
     public function setNombre($nombre) { $this->nombre = $nombre; }
     public function setEspecie($especie) { $this->especie = $especie; } 
